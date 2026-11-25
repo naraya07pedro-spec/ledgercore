@@ -28,8 +28,13 @@ test("post, inspect, reverse, reconstruct and reconcile persisted synthetic reco
   await expect(page.getByRole("heading", { name: "API instance" })).toBeVisible();
   await screenshot(page, "overview");
   const memo = "Browser synthetic transfer " + Date.now();
-  await page.getByRole("combobox", { name: "From", exact: true }).selectOption({ label: "Operating" });
-  await page.getByRole("combobox", { name: "To", exact: true }).selectOption({ label: "Reserve" });
+  const source = page.getByRole("combobox", { name: "From", exact: true });
+  const destination = page.getByRole("combobox", { name: "To", exact: true });
+  await source.selectOption({ label: "Operating" });
+  await source.focus();
+  await page.keyboard.press("Tab");
+  await expect(destination).toBeFocused();
+  await destination.selectOption({ label: "Reserve" });
   await page.getByLabel("Amount in minor units").fill("275");
   await page.getByLabel("Memo").fill(memo);
   await page.getByRole("button", { name: "Post transfer" }).click();
@@ -63,8 +68,10 @@ test("post, inspect, reverse, reconstruct and reconcile persisted synthetic reco
   await page.getByLabel("Statement JSON").fill(JSON.stringify([{ journal, currency: "USD", credits: "276" }]));
   await page.getByRole("button", { name: "Compare statement" }).click();
   await expect(page.getByRole("status")).toHaveText("Reconciliation saved.");
-  await page.getByText("Sequences " + sequence + "–" + sequence, { exact: false }).click();
-  await expect(page.getByText("mismatch", { exact: true })).toBeVisible();
+  const reportTitle = "Sequences " + sequence + "–" + sequence;
+  const report = page.locator("details").filter({ has: page.locator("summary").filter({ hasText: reportTitle }) });
+  await report.locator("summary").click();
+  await expect(report.getByText("mismatch", { exact: true })).toBeVisible();
   await screenshot(page, "reconciliation");
 });
 
