@@ -9,14 +9,38 @@ trap 'rm -rf -- "$work"' EXIT
 go build -o "$work/bench" ./cmd/bench
 api_container=$(docker compose ps -q api)
 db_container=$(docker compose ps -q db)
+# Read each container's own procfs. Docker stats can show the shared host
+# cgroup on rootless Docker without per-container cgroup accounting.
+read -r -d '' sample_processes <<'SH' || true
+service=$1
+process="($2)"
+stamp=$(date +%s%N)
+clock=$(getconf CLK_TCK)
+for stat in /proc/[0-9]*/stat; do
+  awk -v service="$service" -v process="$process" -v stamp="$stamp" -v clock="$clock" '
+    $2 == process {
+      file="/proc/" $1 "/smaps_rollup"
+      pss=""
+      while ((getline line < file) > 0) {
+        if (line ~ /^Pss:/) { split(line, fields); pss=fields[2]; break }
+      }
+      close(file)
+      printf "%s,%s,%d,%s,%s,%d,%s\n",stamp,service,clock,$1,$22,$14+$15,pss
+    }' "$stat" 2>/dev/null || true
+done
+SH
+
 run() {
   local name=$1 pid sampler status=0
   shift
   "$work/bench" -url "$LEDGER_API_TEST_URL" "$@" > "$out/$name.json" &
   pid=$!
   (
+    printf 'timestamp_ns,service,clock_ticks_per_second,pid,process_start,cpu_ticks,pss_kib\n'
     while kill -0 "$pid" 2>/dev/null; do
-      docker stats --no-stream --format '{{.Name}},{{.CPUPerc}},{{.MemUsage}}' "$api_container" "$db_container" || break
+      docker exec "$api_container" sh -c "$sample_processes" sh api ledger 2>/dev/null || true
+      docker exec -u postgres "$db_container" sh -c "$sample_processes" sh db postgres 2>/dev/null || true
+      sleep 0.5
     done
   ) > "$out/$name-resources.csv" &
   sampler=$!
