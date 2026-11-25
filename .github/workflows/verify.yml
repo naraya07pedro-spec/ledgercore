@@ -1,0 +1,60 @@
+name: Verify
+on:
+  push:
+    branches: [main, 'feature/**']
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6
+        with:
+          go-version: '1.27.4'
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24.22.3'
+          cache: npm
+          cache-dependency-path: dashboard/package-lock.json
+      - name: Start Compose stack
+        run: |
+          scripts/local-env.sh
+          docker compose up -d --build
+          for i in {1..30}; do
+            if curl -fsS http://127.0.0.1:18080/readyz && curl -fsS -o /dev/null http://127.0.0.1:13000/; then exit 0; fi
+            sleep 1
+          done
+          exit 1
+      - name: Go verification with PostgreSQL
+        run: |
+          source scripts/host-env.sh
+          test -z "$(gofmt -l cmd integration internal migrations)"
+          go mod verify
+          go vet ./...
+          REQUIRE_POSTGRES=1 go test -race -count=1 -v ./...
+      - name: Dependency audit
+        run: |
+          go run golang.org/x/vuln/cmd/govulncheck@v1.10.0 ./...
+          cd dashboard
+          npm ci
+          npm audit --audit-level=moderate
+      - name: Dashboard and browser verification
+        run: |
+          source scripts/host-env.sh
+          cd dashboard
+          npm run typecheck
+          npx playwright install --with-deps chromium
+          npm test
+      - name: Recovery and load smoke
+        run: |
+          scripts/connection-drill.sh
+          scripts/backup-restore.sh
+          source scripts/host-env.sh
+          go run ./cmd/bench -n 100 -workers 4
+      - name: Stop services
+        if: always()
+        run: |
+          if [[ -f .env ]]; then docker compose down --volumes; fi

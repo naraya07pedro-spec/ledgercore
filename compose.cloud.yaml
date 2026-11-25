@@ -1,0 +1,14 @@
+# Optional build trust configuration for environments with managed TLS egress.
+services:
+  migrate:
+    build:
+      secrets: [build_ca]
+  api:
+    build:
+      secrets: [build_ca]
+  dashboard:
+    build:
+      secrets: [build_ca]
+secrets:
+  build_ca:
+    file: ${LEDGER_BUILD_CA_BUNDLE:?set the path to the trusted CA bundle}

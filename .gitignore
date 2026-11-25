@@ -32,3 +32,14 @@ go.work.sum
 # Editor/IDE
 # .idea/
 # .vscode/
+
+# Local credentials and generated artifacts
+.env
+.env.*
+!.env.example
+dashboard/.next/
+dashboard/node_modules/
+dashboard/next-env.d.ts
+dashboard/*.tsbuildinfo
+dashboard/test-results/
+dashboard/playwright-report/
