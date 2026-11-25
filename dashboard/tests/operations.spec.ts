@@ -1,6 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 import { mkdir } from "node:fs/promises";
 import path from "node:path";
+import http from "node:http";
 
 function token(name: string) {
   const value = process.env[name];
@@ -135,4 +136,31 @@ test("rejects cross-origin proxy writes and retries an ambiguous committed trans
   await page.getByRole("button", { name: "Journal", exact: true }).click();
   await page.getByLabel("Search memo or ID").fill(memo);
   await expect(page.getByRole("row").filter({ hasText: memo })).toHaveCount(1);
+});
+
+test("bounds unfinished request bodies at the dashboard proxy", async ({ request, baseURL }) => {
+  const tokenHeader = "Bearer " + token("LEDGER_OPERATOR_TOKEN");
+  const endpoint = "/api/ledger/journals";
+  const holders = Array.from({ length: 64 }, () => {
+    const pending = http.request(new URL(endpoint, baseURL), {
+      method: "POST",
+      headers: { Authorization: tokenHeader, "Content-Type": "application/json", "Content-Length": "2" },
+    });
+    pending.on("error", () => {});
+    pending.write("{");
+    return pending;
+  });
+  try {
+    await expect.poll(async () => {
+      const response = await request.post(endpoint, { headers: { Authorization: tokenHeader }, data: {} });
+      if (response.status() !== 503) return "";
+      return (await response.json()).error;
+    }, { timeout: 5000 }).toMatch(/^Dashboard request capacity reached/);
+  } finally {
+    for (const pending of holders) pending.destroy();
+  }
+  await expect.poll(async () => {
+    const response = await request.get("/api/ledger/accounts", { headers: { Authorization: tokenHeader } });
+    return response.status();
+  }, { timeout: 8000 }).toBe(200);
 });

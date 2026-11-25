@@ -4,6 +4,8 @@ const readRoutes = new Set(["accounts", "journals", "reconciliations", "operatio
 const writeRoutes = new Set(["journals", "reconciliations"]);
 const reversal = /^journals\/[a-f0-9-]{36}\/reversal$/;
 const maxBody = 128 * 1024;
+const maxInFlight = 64;
+let inFlight = 0;
 
 async function boundedBody(req: NextRequest, signal: AbortSignal): Promise<ArrayBuffer | undefined> {
   if (!req.body) return undefined;
@@ -49,6 +51,10 @@ async function forward(req: NextRequest, context: { params: Promise<{ parts: str
     const value = req.headers.get(name);
     if (value !== null) headers.set(name, value);
   }
+  if (inFlight >= maxInFlight) {
+    return Response.json({ error: "Dashboard request capacity reached. Retry writes with the same key." }, { status: 503 });
+  }
+  inFlight++;
   try {
     const base = process.env.LEDGER_API_URL ?? "http://127.0.0.1:18080";
     const signal = AbortSignal.any([req.signal, AbortSignal.timeout(6500)]);
@@ -66,6 +72,8 @@ async function forward(req: NextRequest, context: { params: Promise<{ parts: str
   } catch (error) {
     if (error instanceof RangeError) return Response.json({ error: "Payload too large" }, { status: 413 });
     return Response.json({ error: "Ledger API unavailable. Retry writes with the same key." }, { status: 503 });
+  } finally {
+    inFlight--;
   }
 }
 
