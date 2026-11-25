@@ -51,7 +51,7 @@ jobs:
         run: |
           source scripts/host-env.sh
           cd dashboard
-          npm test
+          npm test -- --reporter=list,github
       - name: Recovery and load smoke
         run: |
           scripts/connection-drill.sh
