@@ -32,3 +32,42 @@ Run IDs in row order
 - `2370baef-d59f-4f94-a658-778d95da5760`
 
 Thirty-two workers produced longer waits and lower throughput than eight workers for this shared-account workload. The short runs measure local contention with one API instance. Repeated trials, independent account sets, cross-workspace load, and sustained performance remain unmeasured.
+
+## V1 release suite
+
+Run on a disposable stack. On the application revision `4f0625f7974e4470ead30539fc66f5e6c5fc72cf`, we used a clean Compose project, the original pinned PostgreSQL 17.9 build, the durability settings above, and the same 16-connection API pool.
+
+```bash
+scripts/local-env.sh
+docker compose up -d --build
+source scripts/host-env.sh
+scripts/benchmark-suite.sh /tmp/ledgercore-bench
+python3 scripts/summarize-bench.py /tmp/ledgercore-bench
+go run ./cmd/ledger audit
+```
+
+The suite sends 300 warm-up requests with eight workers. It then runs two 2,000-request trials for every combination of workload and four or 16 workers. Shared uses the same accounts and workspace. Independent uses one distinct account pair per worker in one workspace. Cross uses one account pair and workspace per worker. All amounts are one minor unit, and each attempt has a distinct key. The independent sustained run sends 20,000 requests with eight workers. The cross-workspace interruption run sends 6,000 requests with eight workers and stops the API after two seconds before starting it again after a one-second pause. The interruption client backs off on failures and requires a later acknowledgment. The separate restart drill verifies same-key replay.
+
+Only 201 responses count as acknowledged commits. Status 0 means a transport failure. The audit compares the number of visible journals for each run with acknowledgments and checks the full synthetic ledger for imbalance, projection drift, and invalid reversals after each workload. PostgreSQL connection and lock samples use the same 20 ms cadence. Resource samples use each container's process CPU ticks and proportional set size (PSS). CPU rate uses the same process identities across adjacent samples, so transient processes may be omitted. Samples can include fixture setup and audit work. The runs share a single host and storage path.
+
+
+### V1 results
+
+Measured on 25 November 2026 on the same AMD EPYC 9V74 environment described above. Docker 29.9.2 used rootless cgroup driver `none`, which produced shared cgroup usage for both containers. Those figures were discarded. The suite was rerun on a fresh synthetic volume with the per-process sampler at tooling revision `3c31c3a157a656bb26700a4c6c62a7c849b22488`. The executable application source was unchanged. The host API port was 28083 and the archive used `GOFLAGS=-buildvcs=false` to build without Git metadata. [Per-trial results](benchmark-results.json)
+
+The rows give the range across both 2,000-request runs. The two counts in the last columns correspond to trials one and two.
+
+| Workload | Workers | Commits/s | p50 (ms) | p95 (ms) | p99 (ms) | Peak lock waiters | Peak busy DB sessions |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| shared | 4 | 776.6–795.6 | 4.04–4.10 | 9.32–9.37 | 15.84–21.82 | 3 / 3 | 4 / 4 |
+| shared | 16 | 540.4–593.6 | 14.70–16.29 | 72.92–85.96 | 174.43–262.01 | 15 / 15 | 16 / 16 |
+| independent | 4 | 817.6–860.9 | 3.80–3.85 | 8.40–9.81 | 14.67–17.29 | 3 / 4 | 4 / 4 |
+| independent | 16 | 489.8–642.4 | 18.63–21.79 | 35.21–80.54 | 182.08–335.33 | 15 / 15 | 16 / 16 |
+| cross | 4 | 1016.7–1056.5 | 2.70–3.09 | 6.64–7.43 | 12.38–14.66 | 0 / 0 | 4 / 4 |
+| cross | 16 | 1262.5–1266.5 | 8.39–8.61 | 21.79–25.30 | 46.95–94.39 | 0 / 0 | 16 / 15 |
+
+The 20,000-request independent run committed all 20,000 requests in 28.11 seconds (711.5 commits/s). Latency p50, p95 and p99 were 8.88, 19.54 and 46.52 ms. The run peaked at 8 busy API database sessions and 8 sampled lock waiters. Sampled process peaks were 0.64 API CPU cores and 26.34 MiB PSS, and 1.07 PostgreSQL CPU cores and 129.63 MiB PSS. These are sampled peaks, with CPU attribution limited to process identities present in adjacent samples.
+
+The interruption trial recorded 5,488 acknowledged commits in 7.96 seconds and 512 transport failures during the deliberate API stop. Latency p50, p95 and p99 across all attempts were 4.48, 11.48 and 23.26 ms. The database recorded exactly 5,488 journals for the run. New commits resumed after the stop, and the post-suite audit and independent restore passed. The normal repeated and sustained trials recorded zero failures across 44,000 attempts.
+
+With 16 workers, the shared and independent workloads reached 15 sampled lock waiters and had worse p99 latency than at four workers. Cross-workspace runs recorded zero sampled lock waiters. This aligns with serialization in one workspace's sealing phase, which remains even with disjoint accounts. The samples combine PostgreSQL lock types and could miss waits shorter than the sampling interval. These trials used tiny postings, a local synthetic database, one API process and 4 effective CPU cores. They establish no hosted capacity objective.

@@ -1,0 +1,633 @@
+{
+  "cross-16-1": {
+    "attempted": 2000,
+    "attempted_per_second": 1266.485294489696,
+    "committed_per_second": 1266.485294489696,
+    "failure_rate": 0,
+    "invariants": "passed",
+    "latency_ms": {
+      "p50": 8.394881,
+      "p95": 25.300346,
+      "p99": 46.947828
+    },
+    "persisted_journals": 2000,
+    "postgres_lock_sampling": {
+      "samples": 67,
+      "samples_with_lock_waiters": 0,
+      "peak_lock_waiters": 0,
+      "peak_api_db_sessions": 16,
+      "peak_busy_api_db_sessions": 16
+    },
+    "resumed_after_last_failure": false,
+    "run_id": "50daedea-2ee6-402d-8182-112250be767b",
+    "seconds": 1.579173488,
+    "status_counts": {
+      "201": 2000
+    },
+    "workers": 16,
+    "workload": "cross",
+    "resources": {
+      "api": {
+        "snapshots": 2,
+        "peak_pss_mib": 26.57,
+        "peak_sample_cpu_cores_common_processes": 0.67,
+        "cpu_intervals": 1
+      },
+      "db": {
+        "snapshots": 2,
+        "peak_pss_mib": 106.71,
+        "peak_sample_cpu_cores_common_processes": 1.835,
+        "cpu_intervals": 1
+      }
+    }
+  },
+  "cross-16-2": {
+    "attempted": 2000,
+    "attempted_per_second": 1262.536961250883,
+    "committed_per_second": 1262.536961250883,
+    "failure_rate": 0,
+    "invariants": "passed",
+    "latency_ms": {
+      "p50": 8.609205,
+      "p95": 21.790247,
+      "p99": 94.387789
+    },
+    "persisted_journals": 2000,
+    "postgres_lock_sampling": {
+      "samples": 67,
+      "samples_with_lock_waiters": 0,
+      "peak_lock_waiters": 0,
+      "peak_api_db_sessions": 16,
+      "peak_busy_api_db_sessions": 15
+    },
+    "resumed_after_last_failure": false,
+    "run_id": "36bfda01-c25e-4f61-b1ba-42cbe680de14",
+    "seconds": 1.5841120389999999,
+    "status_counts": {
+      "201": 2000
+    },
+    "workers": 16,
+    "workload": "cross",
+    "resources": {
+      "api": {
+        "snapshots": 2,
+        "peak_pss_mib": 26.92,
+        "peak_sample_cpu_cores_common_processes": 0.739,
+        "cpu_intervals": 1
+      },
+      "db": {
+        "snapshots": 2,
+        "peak_pss_mib": 109.34,
+        "peak_sample_cpu_cores_common_processes": 1.798,
+        "cpu_intervals": 1
+      }
+    }
+  },
+  "cross-4-1": {
+    "attempted": 2000,
+    "attempted_per_second": 1056.4516915833176,
+    "committed_per_second": 1056.4516915833176,
+    "failure_rate": 0,
+    "invariants": "passed",
+    "latency_ms": {
+      "p50": 3.088497,
+      "p95": 7.42736,
+      "p99": 12.375308
+    },
+    "persisted_journals": 2000,
+    "postgres_lock_sampling": {
+      "samples": 92,
+      "samples_with_lock_waiters": 0,
+      "peak_lock_waiters": 0,
+      "peak_api_db_sessions": 16,
+      "peak_busy_api_db_sessions": 4
+    },
+    "resumed_after_last_failure": false,
+    "run_id": "97cdd01f-c9fc-4748-8539-442a744db79a",
+    "seconds": 1.89312963,
+    "status_counts": {
+      "201": 2000
+    },
+    "workers": 4,
+    "workload": "cross",
+    "resources": {
+      "api": {
+        "snapshots": 3,
+        "peak_pss_mib": 26.56,
+        "peak_sample_cpu_cores_common_processes": 0.812,
+        "cpu_intervals": 2
+      },
+      "db": {
+        "snapshots": 3,
+        "peak_pss_mib": 103.0,
+        "peak_sample_cpu_cores_common_processes": 1.22,
+        "cpu_intervals": 2
+      }
+    }
+  },
+  "cross-4-2": {
+    "attempted": 2000,
+    "attempted_per_second": 1016.6517124739929,
+    "committed_per_second": 1016.6517124739929,
+    "failure_rate": 0,
+    "invariants": "passed",
+    "latency_ms": {
+      "p50": 2.700345,
+      "p95": 6.63515,
+      "p99": 14.656357
+    },
+    "persisted_journals": 2000,
+    "postgres_lock_sampling": {
+      "samples": 87,
+      "samples_with_lock_waiters": 0,
+      "peak_lock_waiters": 0,
+      "peak_api_db_sessions": 16,
+      "peak_busy_api_db_sessions": 4
+    },
+    "resumed_after_last_failure": false,
+    "run_id": "f65a2831-386e-44a0-a413-3e66cf68eebb",
+    "seconds": 1.967242051,
+    "status_counts": {
+      "201": 2000
+    },
+    "workers": 4,
+    "workload": "cross",
+    "resources": {
+      "api": {
+        "snapshots": 3,
+        "peak_pss_mib": 25.97,
+        "peak_sample_cpu_cores_common_processes": 0.758,
+        "cpu_intervals": 2
+      },
+      "db": {
+        "snapshots": 3,
+        "peak_pss_mib": 105.47,
+        "peak_sample_cpu_cores_common_processes": 1.219,
+        "cpu_intervals": 2
+      }
+    }
+  },
+  "independent-16-1": {
+    "attempted": 2000,
+    "attempted_per_second": 489.76932537228254,
+    "committed_per_second": 489.76932537228254,
+    "failure_rate": 0,
+    "invariants": "passed",
+    "latency_ms": {
+      "p50": 21.785595,
+      "p95": 80.535024,
+      "p99": 335.334713
+    },
+    "persisted_journals": 2000,
+    "postgres_lock_sampling": {
+      "samples": 189,
+      "samples_with_lock_waiters": 188,
+      "peak_lock_waiters": 15,
+      "peak_api_db_sessions": 16,
+      "peak_busy_api_db_sessions": 16
+    },
+    "resumed_after_last_failure": false,
+    "run_id": "9b00787c-5c2c-45b8-b90e-6b44362a8bbd",
+    "seconds": 4.083555046,
+    "status_counts": {
+      "201": 2000
+    },
+    "workers": 16,
+    "workload": "independent",
+    "resources": {
+      "api": {
+        "snapshots": 5,
+        "peak_pss_mib": 26.94,
+        "peak_sample_cpu_cores_common_processes": 0.549,
+        "cpu_intervals": 4
+      },
+      "db": {
+        "snapshots": 5,
+        "peak_pss_mib": 103.08,
+        "peak_sample_cpu_cores_common_processes": 0.976,
+        "cpu_intervals": 4
+      }
+    }
+  },
+  "independent-16-2": {
+    "attempted": 2000,
+    "attempted_per_second": 642.3901171662015,
+    "committed_per_second": 642.3901171662015,
+    "failure_rate": 0,
+    "invariants": "passed",
+    "latency_ms": {
+      "p50": 18.632092,
+      "p95": 35.212386,
+      "p99": 182.075852
+    },
+    "persisted_journals": 2000,
+    "postgres_lock_sampling": {
+      "samples": 145,
+      "samples_with_lock_waiters": 145,
+      "peak_lock_waiters": 15,
+      "peak_api_db_sessions": 16,
+      "peak_busy_api_db_sessions": 16
+    },
+    "resumed_after_last_failure": false,
+    "run_id": "ebb7c3eb-3084-4a70-ab09-c92a926d1422",
+    "seconds": 3.113372928,
+    "status_counts": {
+      "201": 2000
+    },
+    "workers": 16,
+    "workload": "independent",
+    "resources": {
+      "api": {
+        "snapshots": 4,
+        "peak_pss_mib": 26.92,
+        "peak_sample_cpu_cores_common_processes": 0.53,
+        "cpu_intervals": 3
+      },
+      "db": {
+        "snapshots": 4,
+        "peak_pss_mib": 101.09,
+        "peak_sample_cpu_cores_common_processes": 1.024,
+        "cpu_intervals": 3
+      }
+    }
+  },
+  "independent-4-1": {
+    "attempted": 2000,
+    "attempted_per_second": 860.8795413178364,
+    "committed_per_second": 860.8795413178364,
+    "failure_rate": 0,
+    "invariants": "passed",
+    "latency_ms": {
+      "p50": 3.853325,
+      "p95": 8.396262,
+      "p99": 14.667738
+    },
+    "persisted_journals": 2000,
+    "postgres_lock_sampling": {
+      "samples": 115,
+      "samples_with_lock_waiters": 85,
+      "peak_lock_waiters": 3,
+      "peak_api_db_sessions": 16,
+      "peak_busy_api_db_sessions": 4
+    },
+    "resumed_after_last_failure": false,
+    "run_id": "3eec6fe7-387e-4e18-905c-c45cb74e25f5",
+    "seconds": 2.323205401,
+    "status_counts": {
+      "201": 2000
+    },
+    "workers": 4,
+    "workload": "independent",
+    "resources": {
+      "api": {
+        "snapshots": 3,
+        "peak_pss_mib": 26.57,
+        "peak_sample_cpu_cores_common_processes": 0.644,
+        "cpu_intervals": 2
+      },
+      "db": {
+        "snapshots": 3,
+        "peak_pss_mib": 94.81,
+        "peak_sample_cpu_cores_common_processes": 1.039,
+        "cpu_intervals": 2
+      }
+    }
+  },
+  "independent-4-2": {
+    "attempted": 2000,
+    "attempted_per_second": 817.6368193123501,
+    "committed_per_second": 817.6368193123501,
+    "failure_rate": 0,
+    "invariants": "passed",
+    "latency_ms": {
+      "p50": 3.800176,
+      "p95": 9.811885,
+      "p99": 17.292598
+    },
+    "persisted_journals": 2000,
+    "postgres_lock_sampling": {
+      "samples": 118,
+      "samples_with_lock_waiters": 91,
+      "peak_lock_waiters": 4,
+      "peak_api_db_sessions": 16,
+      "peak_busy_api_db_sessions": 4
+    },
+    "resumed_after_last_failure": false,
+    "run_id": "8b6918f8-6f99-4754-a455-9d7afba76aac",
+    "seconds": 2.446073798,
+    "status_counts": {
+      "201": 2000
+    },
+    "workers": 4,
+    "workload": "independent",
+    "resources": {
+      "api": {
+        "snapshots": 3,
+        "peak_pss_mib": 25.93,
+        "peak_sample_cpu_cores_common_processes": 0.633,
+        "cpu_intervals": 2
+      },
+      "db": {
+        "snapshots": 3,
+        "peak_pss_mib": 96.83,
+        "peak_sample_cpu_cores_common_processes": 1.069,
+        "cpu_intervals": 2
+      }
+    }
+  },
+  "outage": {
+    "attempted": 6000,
+    "attempted_per_second": 754.2174930551248,
+    "committed_per_second": 689.8576003144208,
+    "failure_rate": 0.08533333333333333,
+    "invariants": "passed",
+    "latency_ms": {
+      "p50": 4.477447,
+      "p95": 11.484539,
+      "p99": 23.257483
+    },
+    "persisted_journals": 5488,
+    "postgres_lock_sampling": {
+      "samples": 383,
+      "samples_with_lock_waiters": 0,
+      "peak_lock_waiters": 0,
+      "peak_api_db_sessions": 16,
+      "peak_busy_api_db_sessions": 8
+    },
+    "resumed_after_last_failure": true,
+    "run_id": "2e7dd383-0ee8-4a99-8678-c61305ec7a07",
+    "seconds": 7.955264967,
+    "status_counts": {
+      "0": 512,
+      "201": 5488
+    },
+    "workers": 8,
+    "workload": "cross",
+    "resources": {
+      "api": {
+        "snapshots": 7,
+        "peak_pss_mib": 26.41,
+        "peak_sample_cpu_cores_common_processes": 0.946,
+        "cpu_intervals": 5
+      },
+      "db": {
+        "snapshots": 10,
+        "peak_pss_mib": 131.89,
+        "peak_sample_cpu_cores_common_processes": 1.557,
+        "cpu_intervals": 9
+      }
+    }
+  },
+  "shared-16-1": {
+    "attempted": 2000,
+    "attempted_per_second": 540.3512892193723,
+    "committed_per_second": 540.3512892193723,
+    "failure_rate": 0,
+    "invariants": "passed",
+    "latency_ms": {
+      "p50": 16.290977,
+      "p95": 85.964413,
+      "p99": 262.012283
+    },
+    "persisted_journals": 2000,
+    "postgres_lock_sampling": {
+      "samples": 174,
+      "samples_with_lock_waiters": 173,
+      "peak_lock_waiters": 15,
+      "peak_api_db_sessions": 16,
+      "peak_busy_api_db_sessions": 16
+    },
+    "resumed_after_last_failure": false,
+    "run_id": "ed1a60dc-f9fd-49dd-abf5-6eb34aceb373",
+    "seconds": 3.701295879,
+    "status_counts": {
+      "201": 2000
+    },
+    "workers": 16,
+    "workload": "shared",
+    "resources": {
+      "api": {
+        "snapshots": 5,
+        "peak_pss_mib": 26.18,
+        "peak_sample_cpu_cores_common_processes": 0.486,
+        "cpu_intervals": 4
+      },
+      "db": {
+        "snapshots": 5,
+        "peak_pss_mib": 90.96,
+        "peak_sample_cpu_cores_common_processes": 1.07,
+        "cpu_intervals": 4
+      }
+    }
+  },
+  "shared-16-2": {
+    "attempted": 2000,
+    "attempted_per_second": 593.591558819366,
+    "committed_per_second": 593.591558819366,
+    "failure_rate": 0,
+    "invariants": "passed",
+    "latency_ms": {
+      "p50": 14.69508,
+      "p95": 72.919863,
+      "p99": 174.429878
+    },
+    "persisted_journals": 2000,
+    "postgres_lock_sampling": {
+      "samples": 160,
+      "samples_with_lock_waiters": 160,
+      "peak_lock_waiters": 15,
+      "peak_api_db_sessions": 16,
+      "peak_busy_api_db_sessions": 16
+    },
+    "resumed_after_last_failure": false,
+    "run_id": "01338738-2deb-4593-ba3a-04a701e9169f",
+    "seconds": 3.36932015,
+    "status_counts": {
+      "201": 2000
+    },
+    "workers": 16,
+    "workload": "shared",
+    "resources": {
+      "api": {
+        "snapshots": 5,
+        "peak_pss_mib": 26.58,
+        "peak_sample_cpu_cores_common_processes": 0.487,
+        "cpu_intervals": 4
+      },
+      "db": {
+        "snapshots": 5,
+        "peak_pss_mib": 93.25,
+        "peak_sample_cpu_cores_common_processes": 1.123,
+        "cpu_intervals": 4
+      }
+    }
+  },
+  "shared-4-1": {
+    "attempted": 2000,
+    "attempted_per_second": 795.6063533398349,
+    "committed_per_second": 795.6063533398349,
+    "failure_rate": 0,
+    "invariants": "passed",
+    "latency_ms": {
+      "p50": 4.096543,
+      "p95": 9.373405,
+      "p99": 21.818936
+    },
+    "persisted_journals": 2000,
+    "postgres_lock_sampling": {
+      "samples": 125,
+      "samples_with_lock_waiters": 116,
+      "peak_lock_waiters": 3,
+      "peak_api_db_sessions": 8,
+      "peak_busy_api_db_sessions": 4
+    },
+    "resumed_after_last_failure": false,
+    "run_id": "a17b8fa5-0997-41d0-83c9-a7c432f06216",
+    "seconds": 2.513805969,
+    "status_counts": {
+      "201": 2000
+    },
+    "workers": 4,
+    "workload": "shared",
+    "resources": {
+      "api": {
+        "snapshots": 4,
+        "peak_pss_mib": 23.51,
+        "peak_sample_cpu_cores_common_processes": 0.541,
+        "cpu_intervals": 3
+      },
+      "db": {
+        "snapshots": 4,
+        "peak_pss_mib": 64.99,
+        "peak_sample_cpu_cores_common_processes": 0.936,
+        "cpu_intervals": 3
+      }
+    }
+  },
+  "shared-4-2": {
+    "attempted": 2000,
+    "attempted_per_second": 776.6023600771764,
+    "committed_per_second": 776.6023600771764,
+    "failure_rate": 0,
+    "invariants": "passed",
+    "latency_ms": {
+      "p50": 4.042351,
+      "p95": 9.322409,
+      "p99": 15.842396
+    },
+    "persisted_journals": 2000,
+    "postgres_lock_sampling": {
+      "samples": 127,
+      "samples_with_lock_waiters": 109,
+      "peak_lock_waiters": 3,
+      "peak_api_db_sessions": 8,
+      "peak_busy_api_db_sessions": 4
+    },
+    "resumed_after_last_failure": false,
+    "run_id": "13d5e079-65b0-4d3c-9e5e-84d68fd70a36",
+    "seconds": 2.5753205279999998,
+    "status_counts": {
+      "201": 2000
+    },
+    "workers": 4,
+    "workload": "shared",
+    "resources": {
+      "api": {
+        "snapshots": 4,
+        "peak_pss_mib": 23.9,
+        "peak_sample_cpu_cores_common_processes": 0.565,
+        "cpu_intervals": 3
+      },
+      "db": {
+        "snapshots": 4,
+        "peak_pss_mib": 66.87,
+        "peak_sample_cpu_cores_common_processes": 0.954,
+        "cpu_intervals": 3
+      }
+    }
+  },
+  "sustained": {
+    "attempted": 20000,
+    "attempted_per_second": 711.5497286047956,
+    "committed_per_second": 711.5497286047956,
+    "failure_rate": 0,
+    "invariants": "passed",
+    "latency_ms": {
+      "p50": 8.876417,
+      "p95": 19.537307,
+      "p99": 46.524718
+    },
+    "persisted_journals": 20000,
+    "postgres_lock_sampling": {
+      "samples": 1368,
+      "samples_with_lock_waiters": 1368,
+      "peak_lock_waiters": 8,
+      "peak_api_db_sessions": 16,
+      "peak_busy_api_db_sessions": 8
+    },
+    "resumed_after_last_failure": false,
+    "run_id": "54e15470-f999-4b89-82ca-b0e72a3bd1af",
+    "seconds": 28.107663029,
+    "status_counts": {
+      "201": 20000
+    },
+    "workers": 8,
+    "workload": "independent",
+    "resources": {
+      "api": {
+        "snapshots": 35,
+        "peak_pss_mib": 26.34,
+        "peak_sample_cpu_cores_common_processes": 0.635,
+        "cpu_intervals": 34
+      },
+      "db": {
+        "snapshots": 35,
+        "peak_pss_mib": 129.63,
+        "peak_sample_cpu_cores_common_processes": 1.07,
+        "cpu_intervals": 34
+      }
+    }
+  },
+  "warmup": {
+    "attempted": 300,
+    "attempted_per_second": 714.1147416143863,
+    "committed_per_second": 714.1147416143863,
+    "failure_rate": 0,
+    "invariants": "passed",
+    "latency_ms": {
+      "p50": 7.373915,
+      "p95": 29.672219,
+      "p99": 60.677646
+    },
+    "persisted_journals": 300,
+    "postgres_lock_sampling": {
+      "samples": 20,
+      "samples_with_lock_waiters": 19,
+      "peak_lock_waiters": 6,
+      "peak_api_db_sessions": 8,
+      "peak_busy_api_db_sessions": 8
+    },
+    "resumed_after_last_failure": false,
+    "run_id": "43606f56-3b83-471b-ba63-cc85cde57563",
+    "seconds": 0.420100556,
+    "status_counts": {
+      "201": 300
+    },
+    "workers": 8,
+    "workload": "shared",
+    "resources": {
+      "api": {
+        "snapshots": 1,
+        "peak_pss_mib": 20.63,
+        "peak_sample_cpu_cores_common_processes": null,
+        "cpu_intervals": 0
+      },
+      "db": {
+        "snapshots": 1,
+        "peak_pss_mib": 63.3,
+        "peak_sample_cpu_cores_common_processes": null,
+        "cpu_intervals": 0
+      }
+    }
+  }
+}
