@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useEffect, useState, type FormEvent } from "react";
+import { Fragment, useEffect, useRef, useState, type FormEvent } from "react";
 
 type Account = { id: string; name: string; currency: string; balance: string; allowOverdraft: boolean };
 type Journal = { id: string; sequence: string; currency: string; memo: string; recordedAt: string; reversalOf?: string; entries: { account: string; amount: string }[] };
@@ -16,12 +16,16 @@ function money(value: string, currency: string) {
   return `${n < 0n ? "−" : ""}${(magnitude / scale).toLocaleString("en-US")}.${String(magnitude % scale).padStart(2, "0")} ${currency}`;
 }
 
+class RequestError extends Error {
+  constructor(message: string, readonly status: number) { super(message); }
+}
+
 async function call<T>(token: string, path: string, init?: RequestInit): Promise<T> {
   const headers = new Headers(init?.headers);
   headers.set("Authorization", "Bearer " + token);
   const response = await fetch("/api/ledger/" + path, { ...init, headers, cache: "no-store" });
   const data = await response.json();
-  if (!response.ok) throw new Error(data.error ?? "Request failed");
+  if (!response.ok) throw new RequestError(data.error ?? "Request failed", response.status);
   return data as T;
 }
 
@@ -74,6 +78,9 @@ function Console({ token, disconnect }: { token: string; disconnect: () => void 
   const [refresh, setRefresh] = useState(0);
   const [pending, setPending] = useState<Pending>();
   const [active, setActive] = useState(false);
+  const submitting = useRef(false);
+  const historyRequest = useRef<AbortController | null>(null);
+  useEffect(() => () => historyRequest.current?.abort(), []);
   const [notice, setNotice] = useState("");
   const [requestError, setRequestError] = useState("");
   const [loadError, setLoadError] = useState("");
@@ -104,6 +111,8 @@ function Console({ token, disconnect }: { token: string; disconnect: () => void 
   const reversed = new Set(journals.flatMap(j => j.reversalOf ? [j.reversalOf] : []));
 
   async function send(request: Pending) {
+    if (submitting.current) return;
+    submitting.current = true;
     setActive(true);
     setPending(request);
     setRequestError("");
@@ -118,8 +127,11 @@ function Console({ token, disconnect }: { token: string; disconnect: () => void 
       setRefresh(n => n + 1);
     } catch (err) {
       setRequestError(errorText(err));
-      if (!request.key) setPending(undefined);
-    } finally { setActive(false); }
+      if (err instanceof RequestError && err.status >= 400 && err.status < 500) setPending(undefined);
+    } finally {
+      submitting.current = false;
+      setActive(false);
+    }
   }
 
   function transfer(e: FormEvent<HTMLFormElement>) {
@@ -141,8 +153,15 @@ function Console({ token, disconnect }: { token: string; disconnect: () => void 
     e.preventDefault();
     setRequestError("");
     setHistoric(undefined);
-    try { setHistoric(await call<Account[]>(token, "accounts?through=" + encodeURIComponent(through))); }
-    catch (err) { setRequestError(errorText(err)); }
+    historyRequest.current?.abort();
+    const controller = new AbortController();
+    historyRequest.current = controller;
+    try {
+      const balances = await call<Account[]>(token, "accounts?through=" + encodeURIComponent(through), { signal: controller.signal });
+      if (!controller.signal.aborted) setHistoric(balances);
+    } catch (err) {
+      if (!controller.signal.aborted) setRequestError(errorText(err));
+    }
   }
 
   function reconcile(e: FormEvent<HTMLFormElement>) {
@@ -151,7 +170,7 @@ function Console({ token, disconnect }: { token: string; disconnect: () => void 
     let lines: unknown;
     try { lines = JSON.parse(String(form.get("statement"))); }
     catch { setRequestError("The statement must be a valid JSON array."); return; }
-    void send({ path: "reconciliations", message: "Reconciliation saved.", body: JSON.stringify({
+    void send({ path: "reconciliations", key: crypto.randomUUID(), message: "Reconciliation saved.", body: JSON.stringify({
       from: form.get("fromSequence"), through: form.get("throughSequence"), lines,
     }) });
   }
@@ -166,7 +185,7 @@ function Console({ token, disconnect }: { token: string; disconnect: () => void 
       <div className="sidebar-foot"><span className="signal" /> Synthetic workspace</div>
     </aside>
     <main className="workspace">
-      <header className="topbar"><span>Operations workspace</span><div>{ops?.role && <span className="role">{ops.role}</span>}<button onClick={disconnect} disabled={active}>Disconnect</button></div></header>
+      <header className="topbar"><span>Operations workspace</span><div>{ops?.role && <span className="role">{ops.role}</span>}<button onClick={disconnect} disabled={active || !!pending}>Disconnect</button></div></header>
       <div className="content">
         <div className="headline"><div><h1>{tab === "Overview" ? "Ledger overview" : tab}</h1>
           <p>{tab === "Overview" ? "Inspect balances and post synthetic transfers." : tab === "Journal" ? "Search posted transactions and inspect their account entries." : "Compare an external synthetic statement with the journal."}</p></div>
@@ -176,9 +195,9 @@ function Console({ token, disconnect }: { token: string; disconnect: () => void 
         {loadError && <p className="error" role="alert">{loadError}</p>}
         {notice && <p className="notice" role="status">{notice}</p>}
         {requestError && <p className="error" role="alert">{requestError}</p>}
-        {pending?.key && !active && <div className="notice pending"><span>Pending request key <code>{pending.key}</code></span>
+        {pending?.key && !active && <div className="notice pending"><span>Outcome unknown. Retry to recover the result for <code>{pending.key}</code>.</span>
           <button onClick={() => void send(pending)}>Retry same request</button>
-          <button onClick={() => { setPending(undefined); setRequestError(""); }}>Clear pending request</button></div>}
+          <button onClick={() => { if (window.confirm("Inspect the ledger before submitting a new request. Clear this retry?")) { setPending(undefined); setRequestError(""); } }}>Clear pending request</button></div>}
         {tab === "Overview" && <>
           <section aria-labelledby="balances"><h2 id="balances">Account balances</h2><div className="balances">
             {accounts.map(a => <article className="panel balance" key={a.id}><span>{a.name}</span><strong>{money(a.balance, a.currency)}</strong>

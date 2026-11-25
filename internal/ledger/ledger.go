@@ -62,6 +62,10 @@ func ID(v string) bool {
 	return err == nil && parsed != uuid.Nil && parsed.String() == v
 }
 
+func validKey(key string) bool {
+	return len(key) > 0 && len(key) <= 128 && strings.IndexFunc(key, func(r rune) bool { return r < 33 || r > 126 }) == -1
+}
+
 func Currency(v string) bool { return v == "USD" || v == "EUR" || v == "IDR" }
 
 func (s Store) Authenticate(ctx context.Context, token string) (Principal, error) {
@@ -109,8 +113,7 @@ func (s Store) Reverse(ctx context.Context, workspace, key, original string) (Jo
 func (s Store) write(ctx context.Context, workspace, key string, request Posting, original string) (Journal, bool, error) {
 	ctx, span := otel.Tracer("ledgercore/ledger").Start(ctx, "journal.write")
 	defer span.End()
-	if !ID(workspace) || len(key) == 0 || len(key) > 128 ||
-		strings.IndexFunc(key, func(r rune) bool { return r < 33 || r > 126 }) != -1 {
+	if !ID(workspace) || !validKey(key) {
 		return Journal{}, false, ErrInvalid
 	}
 	payload, err := json.Marshal(struct {
@@ -165,6 +168,16 @@ func (s Store) writeOnce(ctx context.Context, workspace, key string, request Pos
 		return Journal{}, false, err
 	}
 	if original != "" {
+		if _, err := tx.Exec(ctx, "SELECT pg_advisory_xact_lock(hashtextextended($1,4))", workspace+"/"+original); err != nil {
+			return Journal{}, false, err
+		}
+		var reversed bool
+		if err := tx.QueryRow(ctx, "SELECT EXISTS(SELECT 1 FROM public.journals WHERE workspace_id=$1 AND reversal_of=$2)", workspace, original).Scan(&reversed); err != nil {
+			return Journal{}, false, err
+		}
+		if reversed {
+			return Journal{}, false, ErrConflict
+		}
 		j, err := getJournal(ctx, tx, workspace, original)
 		if err != nil {
 			return Journal{}, false, err

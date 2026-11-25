@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io/fs"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 )
@@ -19,7 +20,11 @@ func Apply(ctx context.Context, conn *pgx.Conn) error {
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback(ctx)
+	defer func() {
+		cleanup, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		defer cancel()
+		_ = tx.Rollback(cleanup)
+	}()
 	_, err = tx.Exec(ctx, `SELECT pg_advisory_xact_lock(189397612);
 		CREATE TABLE IF NOT EXISTS public.schema_migrations
 			(version text PRIMARY KEY, checksum text NOT NULL)`)

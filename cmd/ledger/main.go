@@ -33,14 +33,24 @@ func main() {
 
 func run(logger *slog.Logger) error {
 	if len(os.Args) != 2 {
-		return errors.New("usage: ledger migrate|seed|serve")
+		return errors.New("usage: ledger migrate|seed|serve|audit|restore-check")
 	}
 	mode := os.Args[1]
-	if mode != "migrate" && mode != "seed" && mode != "serve" {
+	if mode != "migrate" && mode != "seed" && mode != "serve" && mode != "audit" && mode != "restore-check" {
 		return errors.New("unknown ledger command")
 	}
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGTERM, os.Interrupt)
 	defer stop()
+	if mode == "restore-check" {
+		pool, err := poolFor(ctx)
+		if err != nil {
+			return err
+		}
+		defer pool.Close()
+		bounded, cancel := context.WithTimeout(ctx, 15*time.Second)
+		defer cancel()
+		return ledger.RestoreCheck(bounded, ledger.Store{Pool: pool}, os.Getenv("LEDGER_OPERATOR_TOKEN"))
+	}
 	if mode != "serve" {
 		bounded, cancel := context.WithTimeout(ctx, time.Minute)
 		defer cancel()
@@ -55,6 +65,9 @@ func run(logger *slog.Logger) error {
 		defer admin.Close(context.Background())
 		if mode == "migrate" {
 			return migrations.Apply(bounded, admin)
+		}
+		if mode == "audit" {
+			return ledger.Audit(bounded, admin)
 		}
 		pool, err := poolFor(bounded)
 		if err != nil {

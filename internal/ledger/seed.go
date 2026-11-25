@@ -63,3 +63,41 @@ func Seed(ctx context.Context, admin *pgx.Conn, store Store, operator, viewer st
 		Entries: []Entry{{DemoTreasury, -150000}, {DemoOperating, 100000}, {DemoReserve, 50000}}})
 	return err
 }
+
+// RestoreCheck writes a probe and must only be used on the disposable restore.
+func RestoreCheck(ctx context.Context, store Store, token string) error {
+	const probe = "restore-check"
+	var unrestrictedRows int
+	if err := store.Pool.QueryRow(ctx, "SELECT count(*) FROM public.accounts").Scan(&unrestrictedRows); err != nil || unrestrictedRows != 0 {
+		return errors.New("restored workspace policies did not fail closed")
+	}
+	principal, err := store.Authenticate(ctx, token)
+	if err != nil || principal.Workspace != DemoWorkspace || principal.Role != "operator" {
+		return errors.New("restored operator token failed")
+	}
+	opening, replay, err := store.Post(ctx, DemoWorkspace, "bootstrap-opening-v1", Posting{Currency: "USD", Memo: "Synthetic opening balances",
+		Entries: []Entry{{DemoTreasury, -150000}, {DemoOperating, 100000}, {DemoReserve, 50000}}})
+	if err != nil || !replay {
+		return errors.New("opening receipt did not replay in restored database")
+	}
+	accounts, err := store.Accounts(ctx, DemoWorkspace, &opening.Sequence)
+	if err != nil || len(accounts) != 3 {
+		return errors.New("restored historical account view failed")
+	}
+	expected := map[string]string{DemoOperating: "100000", DemoReserve: "50000", DemoTreasury: "-150000"}
+	for _, account := range accounts {
+		if account.Balance != expected[account.ID] {
+			return errors.New("restored historical balances differ")
+		}
+	}
+	posting := Posting{Currency: "USD", Memo: "Restore write probe", Entries: []Entry{{DemoTreasury, -1}, {DemoReserve, 1}}}
+	j, replay, err := store.Post(ctx, DemoWorkspace, probe, posting)
+	if err != nil || replay || j.Sequence <= opening.Sequence {
+		return errors.New("fresh restored posting failed")
+	}
+	again, replay, err := store.Post(ctx, DemoWorkspace, probe, posting)
+	if err != nil || !replay || again.ID != j.ID {
+		return errors.New("restored probe replay failed")
+	}
+	return nil
+}

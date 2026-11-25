@@ -54,6 +54,8 @@ jobs:
           scripts/backup-restore.sh
           source scripts/host-env.sh
           go run ./cmd/bench -n 100 -workers 4
+          go run ./cmd/bench -workload independent -n 100 -workers 4
+          go run ./cmd/bench -workload cross -n 100 -workers 4
       - name: Stop services
         if: always()
         run: |

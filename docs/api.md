@@ -26,7 +26,7 @@ curl -fsS -H "Authorization: Bearer $LEDGER_OPERATOR_TOKEN" \
   "$LEDGER_API_TEST_URL/v1/journals"
 ```
 
-The first successful post or reversal returns `201`. Replay the same canonical payload with the same key to retrieve the original journal with `200` and `Idempotency-Replayed: true`. Entry ordering does not affect the payload digest. The reversal target and operation identity are bound to the key. Generate a fresh key for each new intent. Keys are 1–128 printable ASCII characters without spaces. Reconciliation creates a fresh report per request.
+The first successful post or reversal returns `201`. Replay the same canonical payload with the same key to retrieve the original journal with `200` and `Idempotency-Replayed: true`. Entry ordering does not affect the payload digest. The reversal target and operation identity are bound to the key. Generate a fresh key for each new intent. Keys are 1–128 printable ASCII characters without spaces. Reconciliation accepts an optional `Idempotency-Key` with the same replay statuses. The key binds the sequence bounds and ordered statement rows. Unkeyed reconciliation requests retain the original behavior of creating a new report.
 
 A statement uses `{"from":"2","through":"2","lines":[{"journal":"<journal-uuid>","currency":"USD","credits":"275"}]}`. Use a real sequence and UUID from the posted transaction. An empty `lines` array finds all missing records in the window.
 

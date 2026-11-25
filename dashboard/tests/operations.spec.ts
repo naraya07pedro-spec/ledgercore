@@ -84,3 +84,48 @@ test("viewer can inspect balances on mobile and cannot post", async ({ page }) =
   await page.getByRole("button", { name: "Disconnect" }).click();
   await expect(page.getByLabel("Workspace token")).toBeVisible();
 });
+
+test("rejects cross-origin proxy writes and retries an ambiguous committed transfer exactly once", async ({ page }) => {
+  const operator = token("LEDGER_OPERATOR_TOKEN");
+  await connect(page, operator);
+  const denied = await page.request.post("/api/ledger/journals", {
+    headers: { Authorization: "Bearer " + operator, Origin: "https://other.invalid", "Sec-Fetch-Site": "cross-site" },
+    data: { entries: [] },
+  });
+  expect(denied.status()).toBe(403);
+  const oversized = await page.request.post("/api/ledger/journals", {
+    headers: { Authorization: "Bearer " + operator, "Content-Type": "application/json" },
+    data: " ".repeat(128 * 1024 + 1),
+  });
+  expect(oversized.status()).toBe(413);
+  const route = "**/api/ledger/journals";
+  let originalStatus: number | undefined;
+  let originalKey: string | undefined;
+  await page.route(route, async intercepted => {
+    originalKey = intercepted.request().headers()["idempotency-key"];
+    originalStatus = (await intercepted.fetch()).status();
+    await intercepted.abort();
+  }, { times: 1 });
+  const memo = "Ambiguous browser transfer " + Date.now();
+  await page.getByRole("combobox", { name: "From", exact: true }).selectOption({ label: "Operating" });
+  await page.getByRole("combobox", { name: "To", exact: true }).selectOption({ label: "Reserve" });
+  await page.getByLabel("Amount in minor units").fill("1");
+  await page.getByLabel("Memo").fill(memo);
+  await page.getByRole("button", { name: "Post transfer" }).evaluate((button: HTMLButtonElement) => {
+    button.form?.requestSubmit();
+    button.form?.requestSubmit();
+  });
+  const retry = page.getByRole("button", { name: "Retry same request" });
+  await expect(retry).toBeVisible();
+  expect(originalStatus).toBe(201);
+  expect(originalKey).toBeTruthy();
+  const replay = page.waitForResponse(response => response.url().endsWith("/api/ledger/journals") && response.request().method() === "POST");
+  await retry.click();
+  const replayResponse = await replay;
+  expect(replayResponse.status()).toBe(200);
+  expect(replayResponse.headers()["idempotency-replayed"]).toBe("true");
+  expect(replayResponse.request().headers()["idempotency-key"]).toBe(originalKey);
+  await page.getByRole("button", { name: "Journal", exact: true }).click();
+  await page.getByLabel("Search memo or ID").fill(memo);
+  await expect(page.getByRole("row").filter({ hasText: memo })).toHaveCount(1);
+});

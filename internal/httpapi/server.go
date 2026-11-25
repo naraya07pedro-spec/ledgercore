@@ -66,7 +66,7 @@ func New(store ledger.Store, logger *slog.Logger) http.Handler {
 		ctx, cancel := context.WithTimeout(r.Context(), time.Second)
 		defer cancel()
 		var ready bool
-		err := s.store.Pool.QueryRow(ctx, "SELECT to_regprocedure('public.post_ledger(uuid,uuid,text,text,bytea,text,uuid,text[],bigint[])') IS NOT NULL").Scan(&ready)
+		err := s.store.Pool.QueryRow(ctx, "SELECT to_regclass('public.reconciliation_request_key') IS NOT NULL AND has_function_privilege(current_user, 'public.post_ledger(uuid,uuid,text,text,bytea,text,uuid,text[],bigint[])','EXECUTE')").Scan(&ready)
 		if err != nil || !ready {
 			reply(w, 503, map[string]bool{"ready": false})
 			return
@@ -133,7 +133,7 @@ func New(store ledger.Store, logger *slog.Logger) http.Handler {
 func (s *Server) auth(write bool, next action) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		token, ok := strings.CutPrefix(r.Header.Get("Authorization"), "Bearer ")
-		if !ok || !ledger.TokenValid(token) {
+		if len(r.Header.Values("Authorization")) != 1 || !ok || !ledger.TokenValid(token) {
 			w.Header().Set("WWW-Authenticate", "Bearer")
 			reply(w, 401, map[string]string{"error": "authentication required"})
 			return
@@ -252,9 +252,18 @@ func (s *Server) reconcile(w http.ResponseWriter, r *http.Request, p ledger.Prin
 	if err := decode(w, r, &statement); err != nil {
 		return err
 	}
-	report, err := s.store.Reconcile(r.Context(), p.Workspace, statement)
+	keys := r.Header.Values("Idempotency-Key")
+	if len(keys) > 1 || (len(keys) == 1 && keys[0] == "") {
+		return ledger.ErrInvalid
+	}
+	report, replay, err := s.store.ReconcileWithKey(r.Context(), p.Workspace, r.Header.Get("Idempotency-Key"), statement)
 	if err == nil {
-		reply(w, 201, report)
+		if replay {
+			w.Header().Set("Idempotency-Replayed", "true")
+			reply(w, 200, report)
+		} else {
+			reply(w, 201, report)
+		}
 	}
 	return err
 }

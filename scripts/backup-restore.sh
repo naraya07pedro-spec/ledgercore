@@ -1,20 +1,22 @@
 #!/usr/bin/env bash
 set -euo pipefail
 cd "$(dirname "$0")/.."
+source scripts/host-env.sh
 umask 077
 archive=$(mktemp)
-target="ledger_restore_${BASHPID}_${RANDOM}"
+target="ledger-restore-${BASHPID}-${RANDOM}"
 db() { docker compose exec -T db "$@"; }
+restored() { LEDGER_DB_PORT=0 docker compose -p "$target" "$@"; }
 created=0
 cleanup() {
   rm -f "$archive"
   if [[ $created == 1 ]]; then
-    db dropdb -U postgres "$target" >/dev/null
+    restored down --volumes >/dev/null
   fi
 }
 trap cleanup EXIT
 fingerprint() {
-  db psql -XAt -v ON_ERROR_STOP=1 -U postgres -d "$1" <<'SQL' | sha256sum | cut -d ' ' -f 1
+  "$1" psql -qXAt -v ON_ERROR_STOP=1 -U postgres -d ledger <<'SQL' | sha256sum | cut -d ' ' -f 1
 SET timezone = 'UTC';
 COPY (SELECT * FROM public.schema_migrations ORDER BY version) TO STDOUT;
 COPY (SELECT * FROM public.workspaces ORDER BY id) TO STDOUT;
@@ -26,14 +28,15 @@ COPY (SELECT * FROM public.reconciliations ORDER BY workspace_id,id) TO STDOUT;
 COPY (SELECT last_value,is_called FROM public.journals_sequence_seq) TO STDOUT;
 SQL
 }
-expected=$(fingerprint ledger)
+expected=$(fingerprint db)
 db pg_dump -U postgres --format=custom ledger > "$archive"
-db createdb -U postgres "$target"
 created=1
-db pg_restore --single-transaction --exit-on-error -U postgres -d "$target" < "$archive"
-actual=$(fingerprint "$target")
+restored up -d --wait db
+restore_db() { restored exec -T db "$@"; }
+restore_db pg_restore --single-transaction --exit-on-error -U postgres -d ledger < "$archive"
+actual=$(fingerprint restore_db)
 [[ "$expected" == "$actual" ]] || { echo "Restore fingerprint mismatch. Pause writers before the drill." >&2; exit 1; }
-db psql -XAt -v ON_ERROR_STOP=1 -U postgres -d "$target" <<'SQL'
+restore_db psql -XAt -v ON_ERROR_STOP=1 -U postgres -d ledger <<'SQL'
 DO $$
 BEGIN
   IF EXISTS (
@@ -52,4 +55,5 @@ BEGIN
 END;
 $$;
 SQL
-printf 'Restored %s archive bytes. Fingerprint matched and journal, projection, and role checks passed.\n' "$(wc -c < "$archive")"
+restored run --rm --no-deps -e "LEDGER_OPERATOR_TOKEN" api restore-check
+printf 'Restored %s archive bytes. Fingerprint matched and journal, projection, role, historical balance, replay, and fresh posting checks passed on an independent PostgreSQL container.\n' "$(wc -c < "$archive")"

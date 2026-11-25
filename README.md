@@ -4,7 +4,7 @@ LedgerCore is an open-source, synthetic financial ledger. The Go API posts balan
 
 ## Run locally
 
-Requires Docker with Compose v2 and OpenSSL. The stack uses local ports 13000 for the dashboard, 18080 for the API, and 15432 for PostgreSQL.
+Requires Docker with Compose v2 and OpenSSL. [.env.example](.env.example) documents optional settings and the generated values. The stack uses local ports 13000 for the dashboard, 18080 for the API, and 15432 for PostgreSQL.
 
 ```bash
 scripts/local-env.sh
@@ -35,6 +35,14 @@ REQUIRE_POSTGRES=1 go test -race -count=1 -v ./...
 scripts/connection-drill.sh
 scripts/backup-restore.sh
 go run ./cmd/bench -n 1000 -workers 8
+go run ./cmd/ledger audit
 ```
 
 `docker compose down` stops the stack and retains PostgreSQL data. Only use `docker compose down --volumes` to discard a disposable local dataset. The repository uses the [Apache 2.0 license](LICENSE).
+
+
+## Reviewer walkthrough
+
+Follow one synthetic transfer from the dashboard through the API into the database. Inspect both journal lines, reverse it, and reconstruct the account balances through the original sequence. To see the locking behavior, run `REQUIRE_POSTGRES=1 go test -run TestContentionAndIdempotency -v ./integration` after sourcing the host settings. The test starts 24 competing writers against funds sufficient for ten. Run the [recovery drills](docs/recovery.md) to see a committed HTTP receipt survive both service restarts and a fresh PostgreSQL restore. Compare workloads with `scripts/benchmark-suite.sh` on a disposable stack.
+
+See the [contribution guide](CONTRIBUTING.md), [security reporting](SECURITY.md), [troubleshooting guide](docs/troubleshooting.md), [changelog](CHANGELOG.md) and [draft release notes](docs/release-notes.md).
